@@ -10,19 +10,21 @@ REDIRECT_URI = None
 USER_AGENT = None
 PORT = None
 
+
 def set_config():
-    def read_config(fn='config.ini',key='basecamp'):
+    def read_config(fn='config.ini', key='basecamp'):
         config = configparser.ConfigParser()
 
         dataset = config.read(fn)
 
-        if len(dataset)<1:
-            raise ValueError('Could not read in file: %s'%fn)
+        if len(dataset) < 1:
+            raise ValueError('Could not read in file: %s' % fn)
 
         try:
             return config[key]
         except KeyError:
-            raise KeyError('Section "%s" was not found in the init file: %s'%(key,fn))
+            raise KeyError(
+                'Section "%s" was not found in the init file: %s' % (key, fn))
 
     config = read_config()
 
@@ -36,17 +38,21 @@ def set_config():
     CLIENT_SECRET = config['CLIENT_SECRET']
     USER_AGENT = config['USER_AGENT']
     PORT = config['PORT']
-    REDIRECT_URI = config['REDIRECT_URI_BASE'] + ":" + PORT + "/" + config['callback_adder']
+    REDIRECT_URI = config['REDIRECT_URI_BASE'] + \
+        ":" + PORT + "/" + config['callback_adder']
 
 
 def user_agent():
     return USER_AGENT
+
 
 def base_headers():
     return {"User-Agent": user_agent()}
 
 
 app = Flask(__name__)
+
+
 @app.route('/')
 def homepage():
     text = '<a href="%s">Authenticate with Basecamp 3</a>'
@@ -60,11 +66,12 @@ def make_authorization_url():
     save_created_state(state)
     # type=web_server&client_id=your-client-id&redirect_uri=your-redirect-uri
     params = {
-              "type": "web_server",
-              "client_id": CLIENT_ID,
-              "state": state,
-              "redirect_uri": REDIRECT_URI}
-    url = "https://launchpad.37signals.com/authorization/new?" + six.moves.urllib.parse.urlencode(params)
+        "type": "web_server",
+        "client_id": CLIENT_ID,
+        "state": state,
+        "redirect_uri": REDIRECT_URI}
+    url = "https://launchpad.37signals.com/authorization/new?" + \
+        six.moves.urllib.parse.urlencode(params)
     return url
 
 
@@ -72,8 +79,11 @@ def make_authorization_url():
 # You may want to store valid states in a database or memcache.
 def save_created_state(state):
     pass
+
+
 def is_valid_state(state):
     return True
+
 
 @app.route('/basecamp_callback')
 def basecamp_callback():
@@ -91,11 +101,12 @@ def basecamp_callback():
     # a session for use in other parts of your web app.
     return "Your first name is: %s" % get_username(access_token)
 
+
 def get_token(code):
     # client_auth = requests.auth.HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
     post_data = {"type": "web_server",
                  'client_id': CLIENT_ID,
-                 'client_secret':CLIENT_SECRET,
+                 'client_secret': CLIENT_SECRET,
                  "code": code,
                  "redirect_uri": REDIRECT_URI}
     headers = base_headers()
@@ -115,7 +126,8 @@ def get_token(code):
 def get_username(access_token):
     headers = base_headers()
     headers.update({"Authorization": "bearer " + access_token})
-    response = requests.get("https://launchpad.37signals.com/authorization.json", headers=headers)
+    response = requests.get(
+        "https://launchpad.37signals.com/authorization.json", headers=headers)
     me_json = response.json()
     print(me_json)
     return me_json['identity']['first_name']
